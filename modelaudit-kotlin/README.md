@@ -74,30 +74,27 @@ Workflow [`.github/workflows/build-kotlin-bundle.yml`](../.github/workflows/buil
 
 Artifacts go to `~/.m2/repository/io/github/gammmaaaa/modelaudit-kotlin/<version>/`.
 
-**Remote (Maven Central):** The build publishes to `io.github.gammmaaaa` via the Central Publisher Portal (OSSRH Staging API). You must use a **Portal User Token**, not the old OSSRH login:
+**Remote (Maven Central):** One command uploads to OSSRH Staging and closes/releases to Maven Central (no manual Portal step). From **repo root**:
 
-1. Open **https://central.sonatype.com/usertoken** → **Generate User Token** → set name and expiry → copy the **username** and **password** shown once (they are your token).
-2. Put them in **`~/.gradle/gradle.properties`** (do not commit):
+1. **Portal User Token** — https://central.sonatype.com/usertoken → Generate User Token → copy username and password once.
+2. **Signing (GPG)** — Maven Central requires signed artifacts. Configure in `~/.gradle/gradle.properties` (or repo root `gradle.properties`, do not commit secrets):
 
 ```properties
 sonatypeUsername=TOKEN_USERNAME_FROM_PORTAL
 sonatypePassword=TOKEN_PASSWORD_FROM_PORTAL
+signing.keyId=YOUR_GPG_KEY_ID
+signing.password=YOUR_GPG_KEY_PASSPHRASE
+signing.secretKeyRingFile=/path/to/secring.gpg
 ```
 
-Then run:
+(Or use GPG agent and set only `signing.keyId` and `signing.password`; see [Central publishing](https://central.sonatype.org/publish/publish-gradle/).)
+3. **Publish** (bundle is built automatically if needed):
 
 ```bash
-./gradlew :modelaudit-kotlin:publishMavenPublicationToCentralRepository
+./gradlew publishToMavenCentral
 ```
 
-3. **Transfer deployment to the Portal** (required for maven-publish): the compatibility API does not auto-show deployments. From the **same machine/IP**, call:
-   ```bash
-   curl -X POST -u "$sonatypeUsername:$sonatypePassword" \
-     "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/io.github.gammmaaaa"
-   ```
-   (Use the same token username/password from gradle.properties.) Then open **https://central.sonatype.com/publishing** → **Deployments**; your deployment should appear. When validation passes, click **Publish**.
-
-For Maven Central you also need the `signing` plugin and a GPG key; see [Central publishing docs](https://central.sonatype.org/publish/publish-gradle/).
+This builds the bundle (if needed), uploads the JAR to OSSRH Staging, closes the staging repository, and releases it to Maven Central. No curl or manual Publish in the Portal.
 
 ## Add to your project
 
