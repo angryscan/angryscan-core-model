@@ -1,0 +1,99 @@
+name: Build Kotlin bundled binaries
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'modelaudit/**'
+      - 'scripts/build_bundle.py'
+      - 'scripts/standalone_entry.py'
+      - 'modelaudit-kotlin/**'
+      - 'pyproject.toml'
+      - '.github/workflows/build-kotlin-bundle.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-bundle:
+    name: Bundle ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            os: linux
+          - runner: macos-14
+            os: macos
+          - runner: windows-latest
+            os: windows
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set Python 3.12
+        run: uv python pin 3.12
+
+      - name: Install dependencies (incl. PyInstaller for bundle)
+        run: uv sync --extra all-ci --extra bundle
+
+      - name: Build standalone binary
+        run: uv run python scripts/build_bundle.py
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bins-${{ matrix.os }}-${{ runner.arch }}
+          path: modelaudit-kotlin/src/main/resources/io/modelaudit/bins/
+
+  merge-and-jar:
+    name: Merge bins and build JAR
+    needs: build-bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download all bundle artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: bins-artifacts
+          pattern: bins-*
+
+      - name: Merge bins into resources
+        run: |
+          BINS_ROOT="modelaudit-kotlin/src/main/resources/io/modelaudit/bins"
+          mkdir -p "$BINS_ROOT"
+          for dir in bins-artifacts/bins-*; do
+            if [ -d "$dir" ]; then
+              for platform in "$dir"/*; do
+                if [ -d "$platform" ]; then
+                  name=$(basename "$platform")
+                  mkdir -p "$BINS_ROOT/$name"
+                  cp -R "$platform"/* "$BINS_ROOT/$name/"
+                fi
+              fi
+            fi
+          done
+          echo "Bundled platforms:"
+          ls -la "$BINS_ROOT"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build Kotlin JAR
+        run: ./gradlew :modelaudit-kotlin:jar --no-daemon
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: modelaudit-kotlin-jar
+          path: modelaudit-kotlin/build/libs/modelaudit-kotlin-*.jar
