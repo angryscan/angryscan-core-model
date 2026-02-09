@@ -93,15 +93,15 @@ val requireBundle = tasks.register("requireBundle") {
         if (!binsDir.asFile.exists()) {
             throw GradleException(
                 "Bundled binary missing. From repo root run: uv sync --extra bundle && uv run python scripts/build_bundle.py " +
-                    "then rebuild. The JAR must include io/modelaudit/bins/<platform>/modelaudit."
+                    "then rebuild. The JAR must include io/modelaudit/bins/<platform>/modelaudit.zip."
             )
         }
         val hasBundle = binsDir.asFile.listFiles()?.any { platformDir ->
-            platformDir.isDirectory && (platformDir.resolve("modelaudit").isFile || platformDir.resolve("modelaudit.exe").isFile)
+            platformDir.isDirectory && platformDir.resolve("modelaudit.zip").isFile
         } ?: false
         if (!hasBundle) {
             throw GradleException(
-                "No bundled binary under src/main/resources/io/modelaudit/bins/<platform>/. " +
+                "No bundled binary under src/main/resources/io/modelaudit/bins/<platform>/modelaudit.zip. " +
                     "From repo root run: uv sync --extra bundle && uv run python scripts/build_bundle.py then rebuild."
             )
         }
