@@ -2605,7 +2605,38 @@ def debug(output_json: bool, verbose: bool) -> None:
         click.echo(_format_debug_output(debug_info, verbose))
 
 
+def _wrap_stream_safe_encoding(stream):
+    """Wrap a text stream so write() never raises UnicodeEncodeError (Windows cp1252 etc.)."""
+
+    class SafeWriter:
+        __slots__ = ("_stream",)
+
+        def __init__(self, s):
+            self._stream = s
+
+        def write(self, s):
+            if not s:
+                return
+            try:
+                self._stream.write(s)
+            except UnicodeEncodeError:
+                enc = getattr(self._stream, "encoding", None) or "utf-8"
+                self._stream.write(s.encode(enc, errors="replace").decode(enc))
+
+        def flush(self):
+            self._stream.flush()
+
+        def __getattr__(self, name):
+            return getattr(self._stream, name)
+
+    return SafeWriter(stream)
+
+
 def main() -> None:
+    # On Windows, wrap stdout/stderr so no UnicodeEncodeError (e.g. U+2264) can escape
+    if sys.platform == "win32":
+        sys.stdout = _wrap_stream_safe_encoding(sys.stdout)
+        sys.stderr = _wrap_stream_safe_encoding(sys.stderr)
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
