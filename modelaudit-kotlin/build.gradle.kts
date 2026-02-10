@@ -55,7 +55,7 @@ fun findUvExecutable(): String {
     )
 }
 
-val uvExecutable: String = findUvExecutable()
+val uvExecutable = project.provider { findUvExecutable() }
 
 val buildBundleSync = tasks.register<Exec>("buildBundleSync") {
     group = "modelaudit"
