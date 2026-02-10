@@ -36,6 +36,7 @@ fun scanToJson(path: String): String {
         normalizedPath,
         "--format", "json",
     ).redirectErrorStream(true)
+    processBuilder.environment()["PYTHONIOENCODING"] = "utf-8"
 
     val process = processBuilder.start()
     val output = process.inputStream.bufferedReader().readText()
