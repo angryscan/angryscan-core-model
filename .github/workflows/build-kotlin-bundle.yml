@@ -52,7 +52,29 @@ jobs:
           sudo rm -rf /opt/ghc
           sudo rm -rf /opt/hostedtoolcache/CodeQL
           sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/local/lib/node_modules
+          sudo rm -rf /opt/microsoft
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/local/julia*
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf /usr/local/share/heroku
+          sudo rm -rf /opt/az
+          sudo rm -rf /usr/local/share/miniconda*
+          sudo rm -rf /usr/local/share/phantomjs
+          sudo rm -rf /usr/local/share/sbt
+          sudo rm -rf /usr/local/share/gradle
+          sudo rm -rf /usr/local/share/apache-maven-*
+          sudo rm -rf /usr/local/share/ant
+          sudo rm -rf /usr/local/share/cmake
+          sudo rm -rf /usr/local/share/rustup
+          sudo rm -rf /usr/local/share/pyenv
+          sudo rm -rf /usr/local/share/graalvm
+          sudo rm -rf /usr/local/share/playwright
+          sudo rm -rf /usr/local/share/playwright-browsers
           sudo apt-get clean
+          sudo docker image prune --all --force 2>/dev/null || true
           df -h
 
       - name: Install uv
