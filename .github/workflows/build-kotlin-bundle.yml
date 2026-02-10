@@ -106,7 +106,7 @@ jobs:
                   mkdir -p "$BINS_ROOT/$name"
                   cp -R "$platform"/* "$BINS_ROOT/$name/"
                 fi
-              fi
+              done
             fi
           done
           echo "Bundled platforms:"
@@ -155,7 +155,7 @@ jobs:
                   mkdir -p "$BINS_ROOT/$name"
                   cp -R "$platform"/* "$BINS_ROOT/$name/"
                 fi
-              fi
+              done
             fi
           done
           echo "Bundled platforms:"
