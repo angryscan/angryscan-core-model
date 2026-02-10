@@ -36,7 +36,7 @@ def main() -> int:
     os_raw = platform.system().lower()
     os_name = "macos" if os_raw == "darwin" else os_raw
     arch = platform.machine().lower()
-    if arch == "x86_64":
+    if arch in ("x86_64", "amd64"):
         arch = "x64"
     elif arch in ("aarch64", "arm64"):
         arch = "aarch64"
