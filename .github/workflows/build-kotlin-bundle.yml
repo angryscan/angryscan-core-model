@@ -204,6 +204,4 @@ jobs:
           ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
           ORG_GRADLE_PROJECT_signing_keyId: ${{ secrets.SIGNING_KEY_ID }}
           ORG_GRADLE_PROJECT_signing_password: ${{ secrets.SIGNING_PASSWORD }}
-          # Path to keyring created in previous step (override repo gradle.properties)
-          ORG_GRADLE_PROJECT_signing_secretKeyRingFile: ${{ runner.temp }}/secring.gpg
-        run: ./gradlew publishToMavenCentral -PskipBundleBuild --no-daemon
+        run: ./gradlew publishToMavenCentral -PskipBundleBuild --no-daemon -Psigning.secretKeyRingFile=$RUNNER_TEMP/secring.gpg
