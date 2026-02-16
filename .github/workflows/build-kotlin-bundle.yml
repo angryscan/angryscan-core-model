@@ -204,4 +204,4 @@ jobs:
           ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
           ORG_GRADLE_PROJECT_signing_keyId: ${{ secrets.SIGNING_KEY_ID }}
           ORG_GRADLE_PROJECT_signing_password: ${{ secrets.SIGNING_PASSWORD }}
-        run: ./gradlew publishToMavenCentral -PskipBundleBuild --no-daemon -Psigning.secretKeyRingFile=$RUNNER_TEMP/secring.gpg
+        run: ./gradlew publishToMavenCentral -PskipBundleBuild -PsignForPublish --no-daemon -Psigning.secretKeyRingFile=$RUNNER_TEMP/secring.gpg
