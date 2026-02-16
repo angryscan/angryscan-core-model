@@ -2751,22 +2751,15 @@ version = "0.2.24"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
-    { name = "contourpy", version = "1.3.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "contourpy", version = "1.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "cyclonedx-python-lib" },
     { name = "defusedxml" },
     { name = "fickling" },
-    { name = "fsspec" },
-    { name = "gcsfs" },
-    { name = "huggingface-hub" },
     { name = "numpy" },
     { name = "platformdirs" },
-    { name = "posthog" },
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
     { name = "requests" },
-    { name = "s3fs" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.16.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "yaspin" },
@@ -2811,6 +2804,11 @@ all-ci = [
 ]
 bundle = [
     { name = "pyinstaller" },
+]
+cloud = [
+    { name = "fsspec" },
+    { name = "gcsfs" },
+    { name = "s3fs" },
 ]
 dill = [
     { name = "dill" },
@@ -2860,6 +2858,9 @@ safetensors = [
 sevenzip = [
     { name = "py7zr" },
 ]
+telemetry = [
+    { name = "posthog" },
+]
 tensorflow = [
     { name = "tensorflow", marker = "python_full_version < '3.13'" },
 ]
@@ -2898,7 +2899,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.1.7" },
-    { name = "contourpy", specifier = "<1.3.4" },
     { name = "cyclonedx-python-lib", specifier = ">=11.0.0" },
     { name = "defusedxml", specifier = ">=0.7.1" },
     { name = "dill", marker = "extra == 'all'", specifier = ">=0.3.0,<1.0" },
@@ -2906,13 +2906,12 @@ requires-dist = [
     { name = "dill", marker = "extra == 'dill'", specifier = ">=0.3.0,<1.0" },
     { name = "dill", marker = "extra == 'numpy1'", specifier = ">=0.3.0,<1.0" },
     { name = "fickling", specifier = "==0.1.6" },
-    { name = "fsspec", specifier = ">=2025.5.1" },
-    { name = "gcsfs", specifier = ">=2025.5.1" },
+    { name = "fsspec", marker = "extra == 'cloud'", specifier = ">=2025.5.1" },
+    { name = "gcsfs", marker = "extra == 'cloud'", specifier = ">=2025.5.1" },
     { name = "h5py", marker = "extra == 'all'", specifier = ">=3.1,<4.0" },
     { name = "h5py", marker = "extra == 'all-ci'", specifier = ">=3.1,<4.0" },
     { name = "h5py", marker = "extra == 'h5'", specifier = ">=3.1,<4.0" },
     { name = "h5py", marker = "extra == 'numpy1'", specifier = ">=3.1,<4.0" },
-    { name = "huggingface-hub", specifier = ">=0.23.0" },
     { name = "huggingface-hub", marker = "extra == 'all'", specifier = ">=0.23.0" },
     { name = "huggingface-hub", marker = "extra == 'all-ci'", specifier = ">=0.23.0" },
     { name = "huggingface-hub", marker = "extra == 'huggingface'", specifier = ">=0.23.0" },
@@ -2935,7 +2934,7 @@ requires-dist = [
     { name = "onnx", marker = "python_full_version < '3.13' and extra == 'numpy1'", specifier = ">=1.12.0,<2.0" },
     { name = "onnx", marker = "python_full_version < '3.13' and extra == 'onnx'", specifier = ">=1.12.0,<2.0" },
     { name = "platformdirs", specifier = ">=3.0.0" },
-    { name = "posthog", specifier = ">=7.0.0" },
+    { name = "posthog", marker = "extra == 'telemetry'", specifier = ">=7.0.0" },
     { name = "py-ubjson", marker = "extra == 'all'", specifier = ">=0.16.0" },
     { name = "py-ubjson", marker = "extra == 'all-ci'", specifier = ">=0.16.0" },
     { name = "py-ubjson", marker = "extra == 'xgboost'", specifier = ">=0.16.0" },
@@ -2949,7 +2948,7 @@ requires-dist = [
     { name = "pyyaml", marker = "extra == 'numpy1'", specifier = ">=6.0,<7.0" },
     { name = "pyyaml", marker = "extra == 'yaml'", specifier = ">=6.0,<7.0" },
     { name = "requests", specifier = ">=2.28.0" },
-    { name = "s3fs", specifier = ">=2025.5.1" },
+    { name = "s3fs", marker = "extra == 'cloud'", specifier = ">=2025.5.1" },
     { name = "safetensors", marker = "extra == 'all'", specifier = ">=0.4.0" },
     { name = "safetensors", marker = "extra == 'all-ci'", specifier = ">=0.4.0" },
     { name = "safetensors", marker = "extra == 'numpy1'", specifier = ">=0.4.0" },
@@ -2977,7 +2976,7 @@ requires-dist = [
     { name = "xgboost", marker = "extra == 'xgboost'", specifier = ">=3.1.2,<3.2" },
     { name = "yaspin", specifier = ">=2.5.0" },
 ]
-provides-extras = ["tensorflow", "h5", "pytorch", "yaml", "safetensors", "onnx", "dill", "joblib", "flax", "tflite", "tensorrt", "xgboost", "mlflow", "huggingface", "sevenzip", "bundle", "numpy1", "all-ci", "all"]
+provides-extras = ["tensorflow", "h5", "pytorch", "yaml", "safetensors", "onnx", "dill", "joblib", "flax", "tflite", "tensorrt", "xgboost", "mlflow", "huggingface", "sevenzip", "cloud", "telemetry", "bundle", "numpy1", "all-ci", "all"]
 
 [package.metadata.requires-dev]
 dev = [

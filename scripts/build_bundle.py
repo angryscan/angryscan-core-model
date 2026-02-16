@@ -78,6 +78,14 @@ def main() -> int:
     shutil.make_archive(str(zip_path.with_suffix("")), "zip", REPO_ROOT / "dist-bundle", "modelaudit")
     print(f"Created {zip_path}")
 
+    # Marker for BundledRunner: extract dir includes this so a new JAR bundle = new exe (no stale temp copy).
+    from datetime import datetime
+
+    (out_dir / "bundle_build_id.txt").write_text(
+        f"built={datetime.utcnow().isoformat()}Z\nplatform={platform_key}\n",
+        encoding="utf-8",
+    )
+
     return 0
 
 

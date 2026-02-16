@@ -11,7 +11,7 @@ tasks.test {
 }
 
 group = "io.github.gammmaaaa"
-version = "0.2.2"
+version = "0.2.2-test-12345"
 
 repositories {
     mavenCentral()
@@ -39,6 +39,8 @@ fun findUvExecutable(): String {
         if (f.isFile && f.canExecute()) return f.absolutePath
     }
     val pathSeparator = System.getProperty("path.separator", ":")
+    val isWindows = System.getProperty("os.name").lowercase().contains("win")
+    val exeNames = if (isWindows) listOf("uv.exe", "uv") else listOf("uv")
     val searchDirs = listOf(
         "/opt/homebrew/bin",
         "/usr/local/bin",
@@ -46,8 +48,10 @@ fun findUvExecutable(): String {
         System.getenv("HOME")?.let { "$it/.cargo/bin" },
     ).filterNotNull() + (System.getenv("PATH")?.split(pathSeparator)?.filter { it.isNotBlank() } ?: emptyList())
     for (dir in searchDirs.distinct()) {
-        val candidate = project.file(dir).resolve("uv")
-        if (candidate.isFile && candidate.canExecute()) return candidate.absolutePath
+        for (name in exeNames) {
+            val candidate = project.file(dir).resolve(name)
+            if (candidate.isFile && candidate.canExecute()) return candidate.absolutePath
+        }
     }
     throw GradleException(
         "uv executable not found. Searched: /opt/homebrew/bin, /usr/local/bin, \$HOME/.local/bin, \$HOME/.cargo/bin, and PATH. " +
@@ -55,26 +59,41 @@ fun findUvExecutable(): String {
     )
 }
 
-val uvExecutable = project.provider { findUvExecutable() }
+val uvPath: String = findUvExecutable()
+
+// Separate venv for bundle so we don't pull dev deps (mypy -> librt needs MSVC on Windows). Use Python 3.12 for wheels.
+val bundleVenvDir = rootProject.file(".venv-bundle")
 
 val buildBundleSync = tasks.register<Exec>("buildBundleSync") {
     group = "modelaudit"
-    description = "Run uv sync --extra bundle from repo root"
+    description = "Run uv sync --extra bundle --no-default-groups into .venv-bundle (no mypy/librt)"
     workingDir = repoRoot
-    commandLine(uvExecutable, "sync", "--extra", "bundle")
+    doFirst {
+        environment("UV_PROJECT_ENVIRONMENT", bundleVenvDir.absolutePath)
+    }
+    commandLine(
+        uvPath,
+        "sync",
+        "--extra", "bundle",
+        "--no-default-groups",
+        "--python", "3.12",
+    )
     inputs.files(
         rootProject.file("pyproject.toml"),
         rootProject.file("uv.lock"),
     )
-    outputs.dir(rootProject.file(".venv"))
+    outputs.dir(bundleVenvDir)
 }
 
 val buildBundle = tasks.register<Exec>("buildBundle") {
     group = "modelaudit"
-    description = "Build PyInstaller bundle (uv sync --extra bundle + scripts/build_bundle.py) from repo root"
+    description = "Build PyInstaller bundle from .venv-bundle"
     dependsOn(buildBundleSync)
     workingDir = repoRoot
-    commandLine(uvExecutable, "run", "python", "scripts/build_bundle.py")
+    doFirst {
+        environment("UV_PROJECT_ENVIRONMENT", bundleVenvDir.absolutePath)
+    }
+    commandLine(uvPath, "run", "python", "scripts/build_bundle.py")
     inputs.files(
         rootProject.file("pyproject.toml"),
         rootProject.file("uv.lock"),
@@ -166,22 +185,21 @@ publishing {
     }
 }
 
-// Sign for Maven Central — required for Sonatype/Maven Central
-signing {
-    sign(publishing.publications["maven"])
+// Sign only when -PsignForPublish (publishToMavenLocal runs without signing)
+if (project.hasProperty("signForPublish")) {
+    signing {
+        sign(publishing.publications["maven"])
+    }
 }
 
-// Fail early if signing keys are missing (Gradle reads gradle.properties from project root or ~/.gradle/, NOT from .gradle/)
-tasks.matching { it.name.startsWith("publish") && it.project == project }.configureEach {
+// Require signing keys only for publish tasks other than publishToMavenLocal
+tasks.matching { it.name.startsWith("publish") && it.name != "publishToMavenLocal" && it.project == project }.configureEach {
     doFirst {
         if (!project.hasProperty("signing.keyId") || !project.hasProperty("signing.password") ||
             (!project.hasProperty("signing.secretKeyRingFile") && !project.hasProperty("signing.key"))) {
             throw GradleException(
-                "Signing is required for Maven Central. Add to gradle.properties in project root or ~/.gradle/gradle.properties:\n" +
-                    "  signing.keyId=<your-key-id>\n" +
-                    "  signing.password=<key-passphrase>\n" +
-                    "  signing.secretKeyRingFile=<path-to-exported-secret-key>\n" +
-                    "Note: Gradle does NOT read .gradle/gradle.properties. secretKeyRingFile must be the keyring file (e.g. from: gpg --export-secret-keys KEY_ID > secring.gpg), not the .rev file."
+                "Signing is required for Maven Central. Add to gradle.properties or use -PsignForPublish with signing.* properties.\n" +
+                    "For mavenLocal only, use: ./gradlew publishToMavenLocal (no signing)."
             )
         }
     }

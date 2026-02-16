@@ -2606,7 +2606,9 @@ def debug(output_json: bool, verbose: bool) -> None:
 
 
 def _wrap_stream_safe_encoding(stream):
-    """Wrap a text stream so write() never raises UnicodeEncodeError (Windows cp1252 etc.)."""
+    """Wrap a text stream so write() never raises UnicodeEncodeError (Windows cp1252 etc.). Accepts str or bytes."""
+
+    _safe = (("\u2264", "<="), ("\u2265", ">="), ("\u2500", "-"), ("\u2014", "-"), ("\u2013", "-"))
 
     class SafeWriter:
         __slots__ = ("_stream",)
@@ -2617,6 +2619,12 @@ def _wrap_stream_safe_encoding(stream):
         def write(self, s):
             if not s:
                 return
+            if isinstance(s, bytes):
+                s = s.decode("utf-8", errors="replace")
+            if sys.platform == "win32":
+                for u, a in _safe:
+                    s = s.replace(u, a)
+                s = s.encode("ascii", errors="replace").decode("ascii")
             try:
                 self._stream.write(s)
             except UnicodeEncodeError:
