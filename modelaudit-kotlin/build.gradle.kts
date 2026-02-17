@@ -11,7 +11,7 @@ tasks.test {
 }
 
 group = "io.github.gammmaaaa"
-version = "0.3.1-test-12345"
+version = "0.3.2"
 
 repositories {
     mavenCentral()
