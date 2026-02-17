@@ -28,7 +28,11 @@ dependencies {
 
 val repoRoot = rootProject.layout.projectDirectory.asFile
 
-// Resolve full path to "uv" so bundle tasks work when Gradle runs from IDE (no Homebrew in PATH)
+// When true (e.g. -PskipBundleBuild from root), skip bundle build and uv lookup (CI merge-and-jar has no uv).
+val skipBundleBuild = rootProject.hasProperty("skipBundleBuild") || project.hasProperty("skipBundleBuild")
+
+// Resolve full path to "uv" so bundle tasks work when Gradle runs from IDE (no Homebrew in PATH).
+// Only resolve when not skipping bundle build.
 fun findUvExecutable(): String {
     project.findProperty("uvPath")?.toString()?.let { path ->
         val f = project.file(path)
@@ -59,7 +63,7 @@ fun findUvExecutable(): String {
     )
 }
 
-val uvPath: String = findUvExecutable()
+val uvPath: String = if (skipBundleBuild) "" else findUvExecutable()
 
 // Separate venv for bundle so we don't pull dev deps (mypy -> librt needs MSVC on Windows). Use Python 3.12 for wheels.
 val bundleVenvDir = rootProject.file(".venv-bundle")
@@ -102,8 +106,6 @@ val buildBundle = tasks.register<Exec>("buildBundle") {
     )
     // Do not declare outputs.dir() on src/main/resources/... — Gradle disallows task outputs inside source sets
 }
-
-val skipBundleBuild = project.hasProperty("skipBundleBuild")
 
 val requireBundle = tasks.register("requireBundle") {
     if (!skipBundleBuild) dependsOn(buildBundle)
