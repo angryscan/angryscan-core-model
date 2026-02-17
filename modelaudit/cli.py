@@ -2624,7 +2624,6 @@ def _wrap_stream_safe_encoding(stream):
             if sys.platform == "win32":
                 for u, a in _safe:
                     s = s.replace(u, a)
-                s = s.encode("ascii", errors="replace").decode("ascii")
             try:
                 self._stream.write(s)
             except UnicodeEncodeError:
